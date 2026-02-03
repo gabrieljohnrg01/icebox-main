@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Member{% endblock %}
+
+{% block content %}
+<div class="flex justify-center">
+    <div class="w-full max-w-2xl">
+        <div class="text-center mb-lg">
+            <h1 class="heading-lg">Add Members to <span class="text-accent">{{ startup.name }}</span></h1>
+            <p class="text-muted">Enter member details below. Their username will be auto-generated.</p>
+        </div>
+
+        <div class="glass-card mb-lg">
+            <form method="post">
+                {% csrf_token %}
+                <div class="grid gap-md">
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger text-sm mt-xs">{{ field.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="flex items-center justify-between gap-md mt-lg pt-md border-t border-glass">
+                    <a href="{% url 'view_startup' startup.id %}" class="btn btn-ghost">Finish & View Startup</a>
+                    <button type="submit" class="btn btn-primary">Add Member & Add Another</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- List of Added Members Preview -->
+        <div>
+            <h3 class="heading-md mb-md">Current Members</h3>
+            {% if startup.startupmember_set.exists %}
+            <div class="grid gap-sm">
+                {% for member in startup.startupmember_set.all %}
+                <div class="glass-card p-sm flex justify-between items-center">
+                    <div>
+                        <strong class="block text-lg">{{ member.user.first_name }} {{ member.user.last_name }}</strong>
+                        <div class="text-sm text-muted">Username: {{ member.user.username }}</div>
+                    </div>
+                    <span class="badge badge-info">{{ member.role }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted italic text-center py-md bg-glass-bg rounded-lg border border-glass">No members added
+                yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

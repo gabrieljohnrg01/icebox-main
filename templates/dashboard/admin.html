@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-lg">
+    <h1 class="heading-lg">Admin Dashboard</h1>
+    <a href="{% url 'add_startup' %}" class="btn btn-primary">+ Register Startup</a>
+</div>
+
+<div class="dashboard-grid">
+    <div style="grid-column: span 2;"> <!-- Main Content -->
+        <h3 class="heading-md mb-md">Managed Startups</h3>
+
+        <div class="grid gap-md" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            {% for startup in startups %}
+            <div class="glass-card flex flex-col h-full">
+                <div class="flex justify-between items-start mb-sm">
+                    {% if startup.logo %}
+                    <img src="{{ startup.logo.url }}" alt="{{ startup.name }}" class="avatar">
+                    {% else %}
+                    <div class="avatar-placeholder">
+                        {{ startup.name|slice:":1" }}
+                    </div>
+                    {% endif %}
+                    <span class="badge badge-neutral stage-{{ startup.stage|lower }}">{{ startup.get_stage_display
+                        }}</span>
+                </div>
+
+                <div class="mb-md flex-grow">
+                    <h3 class="heading-sm mb-xs">
+                        <a href="{% url 'view_startup' startup.id %}" class="text-primary hover:text-accent">{{
+                            startup.name }}</a>
+                    </h3>
+                    <p class="text-sm text-muted line-clamp-2"
+                        style="height: 3em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;">
+                        {{ startup.description|default:"No description" }}
+                    </p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-md">
+                    <div class="flex justify-between text-xs mb-xs">
+                        <span class="text-muted">Milestones</span>
+                        <span class="text-accent">{{ startup.milestones.count }} Total</span>
+                    </div>
+                    <div class="w-full bg-glass-border h-1.5 rounded-full overflow-hidden"
+                        style="background: rgba(255,255,255,0.1); border-radius: 99px; height: 6px;">
+                        <div
+                            style="--prog: {{ startup.progress }}%; width: var(--prog); background: var(--brand-orange); height: 100%; border-radius: 99px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-sm border-t border-glass">
+                    <div class="text-xs text-muted flex items-center gap-xs">
+                        Owner: {{ startup.owner.username }}
+                        <a href="{% url 'delete_user' startup.owner.id %}" onclick="return confirm('Delete this user?')"
+                            class="text-danger hover:text-danger-hover px-1" title="Delete User">&times;</a>
+                    </div>
+                    <a href="{% url 'delete_startup' startup.id %}" onclick="return confirm('Delete this startup?')"
+                        class="text-xs font-bold text-danger hover:underline">Delete</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="glass-card text-center py-lg col-span-full">
+                <p class="text-muted">No startups found.</p>
+                <a href="{% url 'add_startup' %}" class="btn btn-outline mt-sm">Get Started</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div> <!-- Sidebar -->
+        <h3 class="heading-md mb-md">Recent Reports</h3>
+        <div class="glass-card p-0 overflow-hidden">
+            <table class="table">
+                {% for report in recent_reports %}
+                <tr>
+                    <td>
+                        <div class="font-bold text-accent mb-xs">{{ report.startup.name }}</div>
+                        <div class="text-sm mb-xs">{{ report.title }}</div>
+                        <div class="text-xs text-muted">{{ report.submitted_at|date:"M d" }} by {{
+                            report.submitted_by.username }}</div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td class="text-center text-muted py-md">No active reports</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="heading-lg">Overview</h1>
+
+<div class="dashboard-grid mb-4">
+    <div class="glass-card stat-card">
+        <div class="stat-number">{{ total_startups }}</div>
+        <div style="color: var(--text-secondary);">Active Startups</div>
+    </div>
+    <div class="glass-card stat-card">
+        <div class="stat-number">{{ total_users }}</div>
+        <div style="color: var(--text-secondary);">Total Users</div>
+    </div>
+    <div class="glass-card stat-card">
+        <div class="stat-number">{{ admins.count }}</div>
+        <div style="color: var(--text-secondary);">Admins</div>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3>Administrators</h3>
+        <a href="{% url 'add_admin' %}" class="btn btn-primary" style="font-size: 0.9rem;">+ Add Admin</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admin in admins %}
+            <tr>
+                <td>{{ admin.username }}</td>
+                <td>{{ admin.email }}</td>
+                <td>{{ admin.date_joined|date:"M d, Y" }}</td>
+                <td>
+                    <a href="{% url 'delete_user' admin.id %}" style="color: var(--danger-color);"
+                        onclick="return confirm('Are you sure?')">Remove</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center" style="color: var(--text-secondary);">No other admins found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="glass-card">
+    <h3>All Startups</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Startup Name</th>
+                <th>Progress</th>
+                <th>Owner</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for startup in startups %}
+            <tr>
+                <td>
+                    <a href="{% url 'view_startup' startup.id %}" style="text-decoration: none; color: inherit;">
+                        <div style="display: flex; align-items: center; gap: 1rem; cursor: pointer;">
+                            <div
+                                style="width: 40px; height: 40px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                                {% if startup.logo %}
+                                <img src="{{ startup.logo.url }}" alt="{{ startup.name }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                <span style="font-weight: bold; color: var(--text-secondary);">{{
+                                    startup.name|slice:":1"
+                                    }}</span>
+                                {% endif %}
+                            </div>
+                            <span style="font-weight: 600; color: var(--text-primary);">{{ startup.name }}</span>
+                        </div>
+                    </a>
+                </td>
+                <td style="width: 30%;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div
+                            style="flex-grow: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                            <div
+                                style="--prog: {{ startup.progress }}%; width: var(--prog); height: 100%; background: var(--accent-color); border-radius: 4px;">
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {{ startup.owner.username }}
+                    <a href="{% url 'delete_user' startup.owner.id %}" title="Delete User"
+                        onclick="return confirm('Delete this user?')"
+                        style="color: var(--danger-color); margin-left: 0.5rem; text-decoration: none;">&times;</a>
+                </td>
+                <td>
+                    <a href="{% url 'delete_startup' startup.id %}" class="btn btn-sm"
+                        style="color: var(--danger-color); border: 1px solid var(--danger-color); padding: 0.25rem 0.5rem;"
+                        onclick="return confirm('Are you sure you want to delete this startup?')">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}My Startups{% endblock %}
+
+{% block content %}
+<h1 class="heading-lg">My Startups</h1>
+<p style="color: var(--text-secondary); margin-bottom: 3rem;">Track your progress and submit reports.</p>
+
+<div class="dashboard-grid">
+    {% for startup in startups %}
+    <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+            {% if startup.logo %}
+            <img src="{{ startup.logo.url }}"
+                style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;">
+            {% endif %}
+            <div>
+                <h2 style="margin-bottom: 0.25rem;">{{ startup.name }}</h2>
+                <span
+                    style="padding: 4px 12px; border-radius: 20px; background: rgba(56, 189, 248, 0.2); color: var(--accent-color); font-size: 0.8em;">{{
+                    startup.get_stage_display }}</span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold;">{{ startup.milestones.count }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Milestones</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold;">{{ startup.progress_reports.count }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Reports</div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'view_startup' startup.id %}" class="btn btn-primary"
+                style="flex: 1; text-align: center;">View Dashboard</a>
+            <a href="{% url 'submit_progress' startup.id %}" class="btn"
+                style="flex: 1; text-align: center; border: 1px solid var(--accent-color); color: var(--accent-color);">Submit
+                Report</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="glass-card text-center">
+        <h3 style="color: var(--text-secondary);">You are not a member of any startups yet.</h3>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ startup.name }}{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-lg relative overflow-hidden">
+    <!-- Background Gradient element for visual pop -->
+    <div
+        style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: radial-gradient(circle, var(--bg-gradient-1) 0%, transparent 70%); opacity: 0.5; pointer-events: none;">
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-start gap-lg">
+        <div class="flex gap-lg items-start">
+            <div class="flex-shrink-0">
+                {% if startup.logo %}
+                <img src="{{ startup.logo.url }}" alt="{{ startup.name }}" class="avatar"
+                    style="width: 100px; height: 100px; border-radius: var(--radius-lg);">
+                {% else %}
+                <div class="avatar-placeholder"
+                    style="width: 100px; height: 100px; border-radius: var(--radius-lg); font-size: 3rem;">
+                    {{ startup.name|slice:":1" }}
+                </div>
+                {% endif %}
+            </div>
+            <div>
+                <h1 class="heading-lg mb-xs">{{ startup.name }}</h1>
+                <div class="flex flex-wrap items-center gap-sm mb-md">
+                    <span class="badge badge-info">{{ startup.get_stage_display }}</span>
+                    <span class="text-sm text-muted">{{ startup.industry }}</span>
+                </div>
+                <p class="text-secondary max-w-2xl mb-md">{{ startup.description }}</p>
+
+                <div class="text-sm text-muted flex gap-md">
+                    <span><strong class="text-primary">Owner:</strong> {{ startup.owner.username }}</span>
+                    <span><strong class="text-primary">Contact:</strong> {{ startup.email }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-sm w-full md:w-auto">
+            {% if user.role == 'admin' or user.role == 'super_admin' %}
+            <a href="{% url 'edit_startup' startup.id %}" class="btn btn-outline">Edit Startup</a>
+            <button class="btn btn-primary" disabled title="Coming Soon">+ Add Member</button>
+            {% endif %}
+            <a href="{% url 'submit_progress' startup.id %}" class="btn btn-primary">Submit Report</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Milestones Section (Spans 2 cols usually) -->
+    <div style="grid-column: span 1 / -1;">
+        <h2 class="heading-md mb-md">Milestones & Roadmap</h2>
+
+        <div class="relative py-lg overflow-x-auto">
+            <!-- Connecting Line -->
+            <div class="absolute w-full bg-border" style="height: 4px; top: 3.5rem; left: 0; z-index: 0;"></div>
+
+            <div class="flex justify-between gap-lg" style="min-width: 600px;">
+                {% for milestone in milestones %}
+                <div class="flex flex-col items-center flex-1 relative z-10 min-w-[200px]">
+                    <!-- Icon -->
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center border-4 mb-md shadow-lg
+                        {% if milestone.status == 'completed' %}bg-success border-bg text-white
+                        {% elif milestone.status == 'pending' %}bg-warning border-bg text-white
+                        {% else %}bg-bg-secondary border-bg text-muted{% endif %}">
+
+                        {% if milestone.status == 'completed' %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        {% elif milestone.status == 'pending' %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        {% else %}
+                        <div class="w-3 h-3 bg-current rounded-full"></div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Card -->
+                    <div class="glass-card p-md w-full text-center">
+                        <div class="font-bold text-primary mb-xs">
+                            {% if milestone.due_date %}
+                            {{ milestone.due_date|date:"M d, Y" }}
+                            {% else %}
+                            Target: {{ milestone.milestone_progress }}%
+                            {% endif %}
+                        </div>
+                        <ul class="text-sm text-muted text-left list-disc list-inside space-y-1">
+                            <li>{{ milestone.title|default:"Milestone" }}</li>
+                            {% for deliverable in milestone.deliverables.all|slice:":2" %}
+                            <li>{{ deliverable.name }}</li>
+                            {% endfor %}
+                            {% if milestone.deliverables.count > 2 %}
+                            <li class="list-none text-xs italic">+{{ milestone.deliverables.count|add:"-2" }} more</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="glass-card w-full text-center text-muted">No milestones defined yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if user.role == 'admin' or user.role == 'super_admin' %}
+        <div class="flex justify-center mt-md">
+            <form method="post" action="{% url 'add_milestone' startup.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline border-dashed hover:border-accent">
+                    + Add New Milestone
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reports Section -->
+    <div style="grid-column: span 1 / -1;">
+        <h2 class="heading-md mb-md">Progress Reports</h2>
+        <div class="grid gap-md" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+            {% for report in reports %}
+            <div class="glass-card p-lg flex flex-col h-full hover:border-accent transition-colors cursor-default">
+                <div class="text-xs text-muted mb-xs flex justify-between">
+                    <span>{{ report.submitted_at|date:"F d, Y" }}</span>
+                    <span class="font-medium text-accent">{{ report.submitted_by.username }}</span>
+                </div>
+                <h4 class="heading-sm mb-sm">{{ report.title }}</h4>
+                <p class="text-sm text-secondary flex-grow mb-md">{{ report.description|truncatechars:120 }}</p>
+                <div class="pt-sm border-t border-glass text-xs text-right">
+                    <a href="#" class="text-accent hover:underline">View Full Report &rarr;</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="glass-card text-center py-lg text-muted col-span-full">
+                No reports submitted.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
