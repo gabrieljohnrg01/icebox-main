@@ -25,7 +25,9 @@
             <div>
                 <h1 class="heading-lg mb-xs">{{ startup.name }}</h1>
                 <div class="flex flex-wrap items-center gap-sm mb-md">
-                    <span class="badge badge-info">{{ startup.get_stage_display }}</span>
+                    {% if current_milestone %}
+                    <span class="badge badge-info">{% if current_milestone.title %}{{ current_milestone.title }}{% else %}Milestone {{ current_milestone.milestone_progress }}{% endif %}</span>
+                    {% endif %}
                     <span class="text-sm text-muted">{{ startup.industry }}</span>
                 </div>
                 <p class="text-secondary max-w-2xl mb-md">{{ startup.description }}</p>
@@ -47,6 +49,29 @@
     </div>
 </div>
 
+{% if user.role == 'admin' or user.role == 'super_admin' %}
+<div class="glass-card mb-lg">
+    <div class="mb-md">
+        <h3 class="text-lg font-semibold text-primary mb-sm">Team Members</h3>
+        {% if startup_members %}
+        <div class="grid grid-cols-2 gap-md md:grid-cols-4">
+            {% for member in startup_members %}
+            <div class="p-md border border-border rounded-lg">
+                <p class="font-semibold text-primary">{{ member.get_full_name|default:member.username }}</p>
+                <p class="text-sm text-muted">{{ member.email }}</p>
+                {% if member.contact_number %}
+                <p class="text-sm text-muted">{{ member.contact_number }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted text-sm">No team members assigned yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard-grid">
     <!-- Milestones Section (Spans 2 cols usually) -->
     <div style="grid-column: span 1 / -1;">
@@ -59,28 +84,7 @@
             <div class="flex justify-between gap-lg" style="min-width: 600px;">
                 {% for milestone in milestones %}
                 <div class="flex flex-col items-center flex-1 relative z-10 min-w-[200px]">
-                    <!-- Icon -->
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center border-4 mb-md shadow-lg
-                        {% if milestone.status == 'completed' %}bg-success border-bg text-white
-                        {% elif milestone.status == 'pending' %}bg-warning border-bg text-white
-                        {% else %}bg-bg-secondary border-bg text-muted{% endif %}">
-
-                        {% if milestone.status == 'completed' %}
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="3">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        {% elif milestone.status == 'pending' %}
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="3">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M1 20v-6h6"></path>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        {% else %}
-                        <div class="w-3 h-3 bg-current rounded-full"></div>
-                        {% endif %}
-                    </div>
+                    <!-- status icon moved into card -->
 
                     <!-- Card -->
                     {% if milestone.is_locked and user.role != 'admin' and user.role != 'super_admin' %}
@@ -91,40 +95,36 @@
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                         </div>
+                        <div class="mb-xs flex items-center justify-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center border-4 shadow-lg
+                                {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.id == current_milestone_id %}bg-warning text-black{% else %}bg-secondary text-white{% endif %}">
+                                {% if milestone.status == 'completed' %}✓{% elif milestone.id == current_milestone_id %}⏳{% else %}🔒{% endif %}
+                            </div>
+                        </div>
                         <div class="font-bold text-primary mb-xs">
-                            {% if milestone.due_date %}
-                            {{ milestone.due_date|date:"M d, Y" }}
-                            {% else %}
-                            Target: {{ milestone.milestone_progress }}%
-                            {% endif %}
+                            Milestone {{ milestone.milestone_progress }}
                         </div>
                         <ul class="text-sm text-muted text-left list-disc list-inside space-y-1">
-                            <li>{{ milestone.title|default:"Milestone" }}</li>
-                            {% for deliverable in milestone.deliverables.all|slice:":2" %}
-                            <li>{{ deliverable.name }}</li>
-                            {% endfor %}
-                            {% if milestone.deliverables.count > 2 %}
-                            <li class="list-none text-xs italic">+{{ milestone.deliverables.count|add:"-2" }} more</li>
+                            {% if milestone.deliverables.first %}
+                            <li>{{ milestone.deliverables.first.name }}</li>
                             {% endif %}
                         </ul>
                         <div class="text-xs text-accent font-semibold mt-md">Complete previous milestone to unlock</div>
                     </div>
                     {% else %}
                     <a href="{% url 'view_milestone' startup.id milestone.id %}" class="glass-card p-md w-full text-center hover:border-accent transition-colors cursor-pointer">
+                        <div class="mb-xs flex items-center justify-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center border-4 shadow-lg
+                                {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.id == current_milestone_id %}bg-warning text-black{% else %}bg-secondary text-white{% endif %}">
+                                {% if milestone.status == 'completed' %}✓{% elif milestone.id == current_milestone_id %}⏳{% else %}🔒{% endif %}
+                            </div>
+                        </div>
                         <div class="font-bold text-primary mb-xs">
-                            {% if milestone.due_date %}
-                            {{ milestone.due_date|date:"M d, Y" }}
-                            {% else %}
-                            Target: {{ milestone.milestone_progress }}%
-                            {% endif %}
+                            Milestone {{ milestone.milestone_progress }}
                         </div>
                         <ul class="text-sm text-muted text-left list-disc list-inside space-y-1">
-                            <li>{{ milestone.title|default:"Milestone" }}</li>
-                            {% for deliverable in milestone.deliverables.all|slice:":2" %}
-                            <li>{{ deliverable.name }}</li>
-                            {% endfor %}
-                            {% if milestone.deliverables.count > 2 %}
-                            <li class="list-none text-xs italic">+{{ milestone.deliverables.count|add:"-2" }} more</li>
+                            {% if milestone.deliverables.first %}
+                            <li>{{ milestone.deliverables.first.name }}</li>
                             {% endif %}
                         </ul>
                     </a>

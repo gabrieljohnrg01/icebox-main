@@ -97,6 +97,7 @@ class Deliverable(models.Model):
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name='deliverables')
     name = models.CharField(max_length=200)
     upload_file = models.FileField(upload_to='deliverables/', blank=True, null=True)
+    admin_file = models.FileField(upload_to='deliverable_admins/', blank=True, null=True)
     due_date = models.DateField(blank=True, null=True)
     requirements = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

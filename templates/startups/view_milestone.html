@@ -5,43 +5,48 @@
 
 {% block content %}
 <style>
+    /* Modal / Timeline container */
     .timeline-container {
-        background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
-        border-radius: 20px;
-        padding: 40px 30px;
+        background: linear-gradient(135deg, #007bff 0%, #0058d6 100%);
+        border-radius: 18px;
+        padding: 36px 28px;
         position: relative;
-        min-height: 600px;
+        min-height: 520px;
+        color: #fff;
     }
 
     .timeline-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
-        color: #000;
+        margin-bottom: 28px;
     }
 
     .timeline-header h1 {
         font-size: 28px;
-        font-weight: bold;
+        font-weight: 700;
         margin: 0;
+        color: #fff;
     }
 
     .close-btn {
-        background: none;
+        background: transparent;
         border: none;
-        font-size: 28px;
+        font-size: 22px;
         cursor: pointer;
-        color: #000;
-        padding: 0;
-        width: 30px;
-        height: 30px;
+        color: rgba(255,255,255,0.95);
+        padding: 6px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
     }
 
+    /* Timeline center line */
     .timeline {
         position: relative;
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
+        padding: 10px 0 40px 0;
     }
 
     .timeline::before {
@@ -49,109 +54,101 @@
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        width: 3px;
+        width: 6px;
         height: 100%;
-        background: #000;
+        background: rgba(255,255,255,0.12);
         top: 0;
+        border-radius: 4px;
     }
 
     .timeline-item {
-        margin-bottom: 50px;
+        margin-bottom: 36px;
         position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 80px;
     }
 
+    /* Content boxes alternate left/right */
     .timeline-item:nth-child(odd) .timeline-content {
         margin-left: 0;
         margin-right: auto;
-        width: calc(50% - 30px);
+        width: calc(50% - 60px);
         text-align: right;
     }
 
     .timeline-item:nth-child(even) .timeline-content {
         margin-left: auto;
         margin-right: 0;
-        width: calc(50% - 30px);
+        width: calc(50% - 60px);
         text-align: left;
     }
 
+    /* Dot with icon */
     .timeline-dot {
         position: absolute;
         left: 50%;
-        top: 0;
+        top: 10px;
         transform: translateX(-50%);
-        width: 40px;
-        height: 40px;
-        border: 4px solid #fff;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-weight: bold;
-        z-index: 10;
-        font-size: 20px;
-    }
-
-    .timeline-dot.completed {
-        background: #28a745;
-    }
-
-    .timeline-dot.pending {
-        background: #ffc107;
-        color: #333;
-    }
-
-    .timeline-dot.not-started {
-        background: #e8e8e8;
-        color: #666;
-    }
-
-    .timeline-dot.rejected {
-        background: #dc3545;
-    }
-
-    .timeline-content {
-        background: #e8e8e8;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .timeline-date {
-        font-weight: bold;
-        color: #000;
-        margin-bottom: 5px;
-    }
-
-    .timeline-name {
-        color: #666;
+        background: #fff;
+        color: #222;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        border: 2px solid rgba(0,0,0,0.06);
+        z-index: 12;
+        font-weight: 700;
         font-size: 14px;
-        margin: 0;
     }
+
+    .timeline-dot.completed { background: #28a745; color: #fff; }
+    .timeline-dot.pending { background: #ffc107; color: #222; }
+    .timeline-dot.not-started { background: rgba(255,255,255,0.9); color: #333; }
+
+    /* Card style */
+    .timeline-content {
+        background: #ffffff;
+        color: #111;
+        padding: 16px 18px;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        min-height: 64px;
+        display: inline-block;
+    }
+
+    .timeline-date { font-weight: 700; color: #111; margin-bottom: 6px; }
+    .timeline-name { color: #666; font-size: 14px; margin: 0; }
 
     .add-deliverable-btn {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        bottom: 0;
+        bottom: 12px;
         background: #fff;
-        border: 2px solid #666;
+        border: none;
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 24px;
-        color: #666;
+        font-size: 26px;
+        color: #0058d6;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.2);
     }
 
-    .add-deliverable-text {
-        text-align: center;
-        color: #000;
-        margin-top: 70px;
-        font-weight: bold;
+    .add-deliverable-text { text-align: center; color: rgba(255,255,255,0.85); margin-top: 56px; font-weight: 700; }
+
+    @media (max-width: 900px) {
+        .timeline-item:nth-child(odd) .timeline-content,
+        .timeline-item:nth-child(even) .timeline-content { width: calc(100% - 80px); }
+        .timeline::before { left: 20px; }
+        .timeline-dot { left: 20px; transform: translateX(0); }
     }
 </style>
 
@@ -187,7 +184,7 @@
 
     <div class="timeline">
         {% for deliverable in deliverables %}
-        <div class="timeline-item" onclick="openDeliverableModal({{ deliverable.id }}, '{{ deliverable.name }}', '{{ deliverable.status }}', '{{ deliverable.requirements }}', '{{ deliverable.due_date|date:'m/d/Y' }}')" style="cursor: pointer;">
+        <div class="timeline-item" onclick="openDeliverableModal({{ deliverable.id }}, '{{ deliverable.name|escapejs }}', '{{ deliverable.status }}', '{{ deliverable.requirements|escapejs }}', '{{ deliverable.due_date|date:'m/d/Y' }}', '{% if deliverable.admin_file %}{{ deliverable.admin_file.url|escapejs }}{% endif %}', '{% if deliverable.upload_file %}{{ deliverable.upload_file.url|escapejs }}{% endif %}')" style="cursor: pointer;">
             <div class="timeline-dot {% if deliverable.status == 'approved' %}completed{% elif deliverable.status == 'submitted' %}pending{% elif deliverable.status == 'rejected' %}rejected{% else %}not-started{% endif %}">
                 {% if deliverable.status == 'approved' %}
                     ✓
@@ -231,10 +228,18 @@
             <div class="modal-grid">
                 <!-- Left Column -->
                 <div class="modal-column">
-                    <!-- Files Section -->
+                    <!-- Admin Files Section (files attached by admins/super_admins) -->
                     <div class="modal-section">
-                        <div class="file-box no-file">
-                            <span>📄 No Files Attached</span>
+                        <div class="file-box admin" id="adminFileBox">
+                            <div id="adminFileLink">📄 No Admin File Attached</div>
+
+                            {% if user.role == 'admin' or user.role == 'super_admin' %}
+                            <form id="adminUploadForm" method="post" enctype="multipart/form-data" style="margin-top:10px;">
+                                {% csrf_token %}
+                                <input type="file" name="file" id="adminFileInput">
+                                <button type="submit" class="btn btn-small">Upload (Admin)</button>
+                            </form>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -290,10 +295,18 @@
 
                 <!-- Right Column -->
                 <div class="modal-column">
-                    <!-- Attached File -->
+                    <!-- Incubatee Attached File -->
                     <div class="modal-section">
-                        <div class="file-box attached">
-                            <span>📎 Attached File</span>
+                        <div class="file-box incubatee" id="incubateeFileBox">
+                            <div id="incubateeFileLink">📎 No File Submitted</div>
+
+                            {% if user.role == 'incubatee' %}
+                            <form id="incubateeUploadForm" method="post" enctype="multipart/form-data" style="margin-top:10px;">
+                                {% csrf_token %}
+                                <input type="file" name="file" id="incubateeFileInput">
+                                <button type="submit" class="btn btn-small">Submit File</button>
+                            </form>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -489,16 +502,43 @@
 </style>
 
 <script>
-function openDeliverableModal(id, name, status, requirements, dueDate) {
+function openDeliverableModal(id, name, status, requirements, dueDate, adminFileUrl, uploadFileUrl) {
+    // Show modal and populate fields
     document.getElementById('deliverableModal').style.display = 'flex';
     document.getElementById('modalTitle').textContent = 'Edit - ' + name;
     document.getElementById('requirements').value = requirements || '';
     if (dueDate && dueDate !== 'Invalid date') {
         document.getElementById('dueDate').value = dueDate;
     }
-    
-    // Store deliverable ID for later use
-    document.getElementById('deliverableModal').dataset.deliverableId = id;
+
+    const modal = document.getElementById('deliverableModal');
+    modal.dataset.deliverableId = id;
+
+    // Admin file link
+    const adminLinkEl = document.getElementById('adminFileLink');
+    if (adminFileUrl && adminFileUrl.length > 0) {
+        adminLinkEl.innerHTML = `<a href="${adminFileUrl}" target="_blank" rel="noopener">📄 Preview Admin File</a>`;
+    } else {
+        adminLinkEl.textContent = '📄 No Admin File Attached';
+    }
+
+    // Incubatee file link
+    const incubateeLinkEl = document.getElementById('incubateeFileLink');
+    if (uploadFileUrl && uploadFileUrl.length > 0) {
+        incubateeLinkEl.innerHTML = `<a href="${uploadFileUrl}" target="_blank" rel="noopener">📎 View Submitted File</a>`;
+    } else {
+        incubateeLinkEl.textContent = '📎 No File Submitted';
+    }
+
+    // Set form actions to include deliverable id
+    const adminForm = document.getElementById('adminUploadForm');
+    if (adminForm) {
+        adminForm.action = `/deliverables/${id}/attach_admin/`;
+    }
+    const incForm = document.getElementById('incubateeUploadForm');
+    if (incForm) {
+        incForm.action = `/deliverables/${id}/attach_incubatee/`;
+    }
 }
 
 function closeDeliverableModal() {

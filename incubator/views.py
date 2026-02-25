@@ -6,6 +6,9 @@ from django.utils import timezone
 from .models import User, Startup, StartupMember, ProgressReport, Milestone, Deliverable
 from .forms import LoginForm, StartupForm, AdminCreationForm, ProgressReportForm, StartupMemberForm
 from django.db.models import Count
+from django.shortcuts import HttpResponse
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 def csrf_failure(request, reason=""):
     """Handle CSRF failures gracefully"""
@@ -181,10 +184,27 @@ def view_startup(request, startup_id):
     milestones = startup.milestones.all()
     reports = startup.progress_reports.order_by('-submitted_at')
     
+    # Calculate current milestone (first one that's not completed and not locked)
+    current_milestone = None
+    current_milestone_id = None
+    for milestone in milestones:
+        if milestone.status != 'completed' and not milestone.is_locked():
+            current_milestone = milestone
+            current_milestone_id = milestone.id
+            break
+    
+    # Get startup members (only for admins)
+    startup_members = []
+    if request.user.role in ['admin', 'super_admin']:
+        startup_members = startup.members.all()
+    
     context = {
         'startup': startup,
         'milestones': milestones,
-        'reports': reports
+        'reports': reports,
+        'current_milestone_id': current_milestone_id,
+        'current_milestone': current_milestone,
+        'startup_members': startup_members
     }
     return render(request, 'startups/view.html', context)
 
@@ -198,6 +218,42 @@ def edit_startup(request, startup_id):
     
     if not (is_admin or is_owner):
         return redirect('dashboard')
+
+
+@login_required
+def attach_admin_file(request, deliverable_id):
+    # Only admin or super_admin can attach admin files
+    if request.user.role not in ['admin', 'super_admin']:
+        return redirect('dashboard')
+
+    deliverable = get_object_or_404(Deliverable, id=deliverable_id)
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        deliverable.admin_file = request.FILES.get('file')
+        deliverable.save()
+
+    # Redirect back to milestone view
+    milestone = deliverable.milestone
+    return HttpResponseRedirect(reverse('view_milestone', args=[milestone.startup.id, milestone.id]))
+
+
+@login_required
+def attach_incubatee_file(request, deliverable_id):
+    # Incubatee (startup members or owner) can attach their file
+    deliverable = get_object_or_404(Deliverable, id=deliverable_id)
+    startup = deliverable.milestone.startup
+
+    # Allow owner, startup members, admins
+    is_member = request.user in startup.members.all() or request.user == startup.owner
+    if not (is_member or request.user.role in ['admin', 'super_admin']):
+        return redirect('dashboard')
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        deliverable.upload_file = request.FILES.get('file')
+        deliverable.save()
+
+    milestone = deliverable.milestone
+    return HttpResponseRedirect(reverse('view_milestone', args=[milestone.startup.id, milestone.id]))
         
     if request.method == 'POST':
         form = StartupForm(request.POST, request.FILES, instance=startup, user=request.user)
