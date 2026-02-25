@@ -25,7 +25,15 @@ SECRET_KEY = 'django-insecure-8a=@2!4dfxzgmydwa$xe$und3st+=7fwif^k!&=*t@#zh5izj=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'localhost:8000', 'testserver']
+
+# CSRF Settings for development
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://localhost:8000',
+    'https://127.0.0.1:8000',
+]
 
 
 # Application definition
@@ -123,4 +131,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'incubator.User'
+
+# Session & Cookie Settings for development
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # Must be False for JavaScript access if needed
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Additional CSRF Settings
+CSRF_USE_SESSIONS = False
+CSRF_FAILURE_VIEW = 'incubator.views.csrf_failure'
 

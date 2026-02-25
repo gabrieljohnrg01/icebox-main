@@ -2,9 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import User, Startup, StartupMember, ProgressReport, Milestone
+from django.utils import timezone
+from .models import User, Startup, StartupMember, ProgressReport, Milestone, Deliverable
 from .forms import LoginForm, StartupForm, AdminCreationForm, ProgressReportForm, StartupMemberForm
 from django.db.models import Count
+
+def csrf_failure(request, reason=""):
+    """Handle CSRF failures gracefully"""
+    return render(request, 'csrf_error.html', {'reason': reason}, status=403)
 
 def index(request):
     if request.user.is_authenticated:
@@ -141,14 +146,26 @@ def add_startup(request):
             startup.save()
             
             # Auto-create default milestones
+            deliverable_counts = {1: 5, 2: 3, 3: 4, 4: 3}
+            
             for i in range(1, 5):
-                Milestone.objects.create(
+                milestone = Milestone.objects.create(
                     startup=startup,
                     milestone_progress=i,
                     title=f"Milestone {i}",
                     description=f"Default milestone {i} for {startup.name}",
                     status='pending'
                 )
+                
+                # Add default deliverables based on milestone number
+                deliverable_count = deliverable_counts.get(i, 0)
+                for j in range(1, deliverable_count + 1):
+                    Deliverable.objects.create(
+                        milestone=milestone,
+                        name=f"Deliverable {j}",
+                        requirements=f"Complete deliverable {j} for milestone {i}",
+                        status='pending'
+                    )
 
             messages.success(request, 'Startup created! Now add members.')
             return redirect('add_member', startup_id=startup.id)
@@ -287,6 +304,42 @@ def submit_progress(request, startup_id):
     return render(request, 'startups/submit_report.html', {'form': form, 'startup': startup})
 
 @login_required
+def view_milestone(request, startup_id, milestone_id):
+    startup = get_object_or_404(Startup, id=startup_id)
+    milestone = get_object_or_404(Milestone, id=milestone_id, startup=startup)
+    deliverables = milestone.deliverables.all().order_by('id')
+    
+    # Check if milestone is locked
+    is_locked = milestone.is_locked()
+    
+    # Only admins can bypass the lock
+    if is_locked and request.user.role not in ['admin', 'super_admin']:
+        messages.error(request, f'This milestone is locked. Complete the previous milestone first.')
+        return redirect('view_startup', startup_id=startup_id)
+    
+    context = {
+        'startup': startup,
+        'milestone': milestone,
+        'deliverables': deliverables,
+        'is_locked': is_locked,
+    }
+    return render(request, 'startups/view_milestone.html', context)
+
+@login_required
 def update_milestone_status(request, startup_id, milestone_id):
-    # Helper to update status via AJAX or post
-    pass
+    if request.user.role not in ['admin', 'super_admin']:
+        return redirect('dashboard')
+    
+    startup = get_object_or_404(Startup, id=startup_id)
+    milestone = get_object_or_404(Milestone, id=milestone_id, startup=startup)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(Milestone.STATUS_CHOICES):
+            milestone.status = new_status
+            if new_status == 'completed':
+                milestone.completed_at = timezone.now()
+            milestone.save()
+            messages.success(request, f'Milestone status updated to {milestone.get_status_display()}')
+    
+    return redirect('view_milestone', startup_id=startup_id, milestone_id=milestone_id)

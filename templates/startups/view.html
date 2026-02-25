@@ -83,7 +83,14 @@
                     </div>
 
                     <!-- Card -->
-                    <div class="glass-card p-md w-full text-center">
+                    {% if milestone.is_locked and user.role != 'admin' and user.role != 'super_admin' %}
+                    <div class="glass-card p-md w-full text-center opacity-50 cursor-not-allowed relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
                         <div class="font-bold text-primary mb-xs">
                             {% if milestone.due_date %}
                             {{ milestone.due_date|date:"M d, Y" }}
@@ -100,7 +107,28 @@
                             <li class="list-none text-xs italic">+{{ milestone.deliverables.count|add:"-2" }} more</li>
                             {% endif %}
                         </ul>
+                        <div class="text-xs text-accent font-semibold mt-md">Complete previous milestone to unlock</div>
                     </div>
+                    {% else %}
+                    <a href="{% url 'view_milestone' startup.id milestone.id %}" class="glass-card p-md w-full text-center hover:border-accent transition-colors cursor-pointer">
+                        <div class="font-bold text-primary mb-xs">
+                            {% if milestone.due_date %}
+                            {{ milestone.due_date|date:"M d, Y" }}
+                            {% else %}
+                            Target: {{ milestone.milestone_progress }}%
+                            {% endif %}
+                        </div>
+                        <ul class="text-sm text-muted text-left list-disc list-inside space-y-1">
+                            <li>{{ milestone.title|default:"Milestone" }}</li>
+                            {% for deliverable in milestone.deliverables.all|slice:":2" %}
+                            <li>{{ deliverable.name }}</li>
+                            {% endfor %}
+                            {% if milestone.deliverables.count > 2 %}
+                            <li class="list-none text-xs italic">+{{ milestone.deliverables.count|add:"-2" }} more</li>
+                            {% endif %}
+                        </ul>
+                    </a>
+                    {% endif %}
                 </div>
                 {% empty %}
                 <div class="glass-card w-full text-center text-muted">No milestones defined yet.</div>

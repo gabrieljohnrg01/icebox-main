@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}CSRF Token Error{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center" style="min-height: 80vh;">
+    <div class="glass-card text-center" style="width: 100%; max-width: 500px;">
+        <h1 class="heading-lg mb-md text-danger">Security Check Failed (403)</h1>
+        <p class="text-muted mb-lg">CSRF token verification failed.</p>
+        
+        <div class="bg-light p-md rounded mb-lg" style="text-align: left;">
+            <p><strong>What happened?</strong></p>
+            <p>Django's CSRF protection detected an invalid security token. This typically occurs when:</p>
+            <ul>
+                <li>You refreshed the page after logging in</li>
+                <li>Your browser didn't send cookies properly</li>
+                <li>You're using an incognito/private window</li>
+                <li>Session cookies expired</li>
+            </ul>
+        </div>
+
+        <div class="mb-lg">
+            <p class="text-sm text-muted mb-md">Try one of these solutions:</p>
+            <ol style="text-align: left;">
+                <li>{{ reason }}</li>
+                <li>Clear your browser cookies and try again</li>
+                <li>Disable private/incognito mode</li>
+                <li>Try a different browser</li>
+            </ol>
+        </div>
+
+        <a href="{% url 'login' %}" class="btn btn-primary">Return to Login</a>
+    </div>
+</div>
+{% endblock %}

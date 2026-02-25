@@ -70,6 +70,19 @@ class Milestone(models.Model):
     due_date = models.DateField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
 
+    def is_locked(self):
+        """Check if this milestone is locked (previous milestone not completed)"""
+        if self.milestone_progress == 1:
+            return False  # First milestone is never locked
+        
+        previous_milestone = self.startup.milestones.filter(
+            milestone_progress=self.milestone_progress - 1
+        ).first()
+        
+        if previous_milestone:
+            return previous_milestone.status != 'completed'
+        return False
+
     def __str__(self):
         return f"{self.startup.name} - Milestone {self.milestone_progress}"
 
@@ -78,6 +91,7 @@ class Deliverable(models.Model):
         ('pending', 'Pending'),
         ('submitted', 'Submitted'),
         ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
     )
 
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name='deliverables')

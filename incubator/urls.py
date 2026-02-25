@@ -21,5 +21,6 @@ urlpatterns = [
     
     # Progress & Milestones
     path('startups/<int:startup_id>/submit-report/', views.submit_progress, name='submit_progress'),
+    path('startups/<int:startup_id>/milestones/<int:milestone_id>/', views.view_milestone, name='view_milestone'),
     path('startups/<int:startup_id>/milestones/<int:milestone_id>/status/', views.update_milestone_status, name='update_milestone_status'),
 ]
