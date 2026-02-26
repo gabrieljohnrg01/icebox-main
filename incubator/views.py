@@ -219,6 +219,17 @@ def edit_startup(request, startup_id):
     if not (is_admin or is_owner):
         return redirect('dashboard')
 
+    # handle form submission and display
+    if request.method == 'POST':
+        form = StartupForm(request.POST, request.FILES, instance=startup, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Startup updated.')
+            return redirect('view_startup', startup_id=startup.id)
+    else:
+        form = StartupForm(instance=startup, user=request.user)
+    return render(request, 'startups/edit.html', {'form': form, 'startup': startup})
+
 
 @login_required
 def attach_admin_file(request, deliverable_id):
@@ -254,16 +265,6 @@ def attach_incubatee_file(request, deliverable_id):
 
     milestone = deliverable.milestone
     return HttpResponseRedirect(reverse('view_milestone', args=[milestone.startup.id, milestone.id]))
-        
-    if request.method == 'POST':
-        form = StartupForm(request.POST, request.FILES, instance=startup, user=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Startup updated.')
-            return redirect('view_startup', startup_id=startup.id)
-    else:
-        form = StartupForm(instance=startup, user=request.user)
-    return render(request, 'startups/edit.html', {'form': form, 'startup': startup})
 
 @login_required
 def add_member(request, startup_id):
@@ -292,7 +293,7 @@ def add_member(request, startup_id):
                 counter += 1
             
             # Create User (Default password)
-            password = "password123" 
+            password = "123"
             try:
                 user = User.objects.create_user(
                     username=username, 
@@ -320,6 +321,52 @@ def add_member(request, startup_id):
         form = StartupMemberForm()
 
     return render(request, 'startups/add_member.html', {'form': form, 'startup': startup})
+
+
+@login_required
+def delete_member(request, startup_id, member_id):
+    # Only admin or super_admin can remove members
+    if request.user.role not in ['admin', 'super_admin']:
+        return redirect('dashboard')
+
+    startup = get_object_or_404(Startup, id=startup_id)
+    user = get_object_or_404(User, id=member_id)
+
+    # Ensure the membership exists
+    membership = StartupMember.objects.filter(startup=startup, user=user).first()
+    if not membership:
+        messages.error(request, 'Member not found for this startup.')
+        return redirect('view_startup', startup_id=startup.id)
+
+    # Prevent deleting the owner via this action
+    if user == startup.owner:
+        messages.error(request, 'Cannot remove the owner from the startup.')
+        return redirect('view_startup', startup_id=startup.id)
+
+    # Delete membership record
+    membership.delete()
+
+    # Optionally delete the user account as well (only incubatee accounts)
+    if request.method == 'POST' and request.POST.get('delete_account'):
+        # Only allow deleting incubatee accounts via this action
+        if user.role != 'incubatee':
+            messages.error(request, 'Can only delete incubatee accounts via this action.')
+            return redirect('view_startup', startup_id=startup.id)
+
+        # If the user is still a member of other startups, prevent accidental deletion
+        other_memberships = StartupMember.objects.filter(user=user).exists()
+        if other_memberships:
+            messages.error(request, 'User is a member of other startups; cannot delete account here. Remove other memberships first or delete the account from the admin panel.')
+            return redirect('view_startup', startup_id=startup.id)
+
+        # Safe to delete the user
+        username_display = user.get_full_name() or user.username
+        user.delete()
+        messages.success(request, f'Account {username_display} deleted and removed from {startup.name}.')
+        return redirect('dashboard')
+
+    messages.success(request, f'Member {user.get_full_name() or user.username} removed from {startup.name}.')
+    return redirect('view_startup', startup_id=startup.id)
 
 @login_required
 def add_milestone(request, startup_id):

@@ -18,6 +18,7 @@ urlpatterns = [
     path('startups/<int:startup_id>/', views.view_startup, name='view_startup'),
     path('startups/<int:startup_id>/add-member/', views.add_member, name='add_member'),
     path('startups/<int:startup_id>/add-milestone/', views.add_milestone, name='add_milestone'),
+    path('startups/<int:startup_id>/members/<int:member_id>/delete/', views.delete_member, name='delete_member'),
     
     # Progress & Milestones
     path('startups/<int:startup_id>/submit-report/', views.submit_progress, name='submit_progress'),

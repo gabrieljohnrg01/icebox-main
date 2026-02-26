@@ -42,7 +42,11 @@
         <div class="flex flex-col gap-sm w-full md:w-auto">
             {% if user.role == 'admin' or user.role == 'super_admin' %}
             <a href="{% url 'edit_startup' startup.id %}" class="btn btn-outline">Edit Startup</a>
-            <button class="btn btn-primary" disabled title="Coming Soon">+ Add Member</button>
+            <a href="{% url 'add_member' startup.id %}" class="btn btn-primary">+ Add Member</a>
+            <form method="post" action="{% url 'delete_startup' startup.id %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this startup? This action cannot be undone.')">Delete Startup</button>
+            </form>
             {% endif %}
             <a href="{% url 'submit_progress' startup.id %}" class="btn btn-primary">Submit Report</a>
         </div>
@@ -56,12 +60,25 @@
         {% if startup_members %}
         <div class="grid grid-cols-2 gap-md md:grid-cols-4">
             {% for member in startup_members %}
-            <div class="p-md border border-border rounded-lg">
-                <p class="font-semibold text-primary">{{ member.get_full_name|default:member.username }}</p>
-                <p class="text-sm text-muted">{{ member.email }}</p>
-                {% if member.contact_number %}
-                <p class="text-sm text-muted">{{ member.contact_number }}</p>
-                {% endif %}
+            <div class="p-md border border-border rounded-lg flex flex-col justify-between">
+                <div>
+                    <p class="font-semibold text-primary">{{ member.get_full_name|default:member.username }}</p>
+                    <p class="text-sm text-muted">{{ member.email }}</p>
+                    {% if member.contact_number %}
+                    <p class="text-sm text-muted">{{ member.contact_number }}</p>
+                    {% endif %}
+                </div>
+                <div class="mt-sm">
+                    {% if user.role == 'admin' or user.role == 'super_admin' %}
+                    <form method="post" action="{% url 'delete_member' startup.id member.id %}">
+                        {% csrf_token %}
+                        <div class="flex gap-sm">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove {{ member.get_full_name|default:member.username }} from this startup?')">Remove</button>
+                            <button type="submit" name="delete_account" value="1" class="btn btn-sm btn-ghost text-danger" onclick="return confirm('Remove and permanently delete the account for {{ member.get_full_name|default:member.username }}? This cannot be undone.')">Remove & Delete Account</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
